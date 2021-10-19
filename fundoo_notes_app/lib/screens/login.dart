@@ -34,19 +34,26 @@ class _LoginState extends State<Login> {
       var map = {
         'email': userAllData['email'],
         'firstName': userAllData['firstName'],
-        'password': userAllData['password']
+        'password': userAllData['password'],
+        // 'profilImagePath': userAllData['profileImage'],
+        'id': userAllData.id
       };
       userData.add(map);
     });
     print(userData);
   }
 
-  Future<void> setSharedData(String email, String firstName) async {
+  Future<void> setSharedData(
+      String email, String firstName, String profileImageId) async {
     final prefs = await SharedPreferences.getInstance();
 
     prefs.setString('email', email);
     prefs.setString('firstName', firstName);
     prefs.setBool('isLogin', true);
+    prefs.setString('profileImageId', profileImageId);
+    // prefs.setString('profileImagePath', profileImagePath);
+    print('pppppppppppppppppppppppppppppp');
+    // print(profileImagePath);
   }
 
   @override
@@ -170,8 +177,11 @@ class _LoginState extends State<Login> {
                       for (int i = 0; i < userData.length; i++) {
                         if (userData[i]['email'] == '${email.text}' &&
                             userData[i]['password'] == '${password.text}') {
-                          setSharedData(userData[i]['email'].toString(),
-                              userData[i]['firstName'].toString());
+                          setSharedData(
+                              userData[i]['email'].toString(),
+                              userData[i]['firstName'].toString(),
+                              userData[i]['id'].toString());
+                          //  userData[i]['profileImagePath'].toString());
                           checkUserPresent = true;
                           break;
                         }
@@ -213,8 +223,19 @@ class _LoginState extends State<Login> {
                         isLoggedIn = true;
                         _userObj = userData!;
                         if (_userObj.email != '') {
-                          setSharedData(
-                              _userObj.email, _userObj.displayName.toString());
+                          Map<String, dynamic> data = {
+                            "firstName": _userObj.displayName,
+                            "lastName": '',
+                            "email": _userObj.email,
+                            "password": '',
+                            "profileImage": ""
+                          };
+                          FirebaseFirestore.instance
+                              .collection("users")
+                              .add(data);
+
+                          setSharedData(_userObj.email,
+                              _userObj.displayName.toString(), "");
                           Navigator.pushNamed(context, '/home');
                         }
                       });

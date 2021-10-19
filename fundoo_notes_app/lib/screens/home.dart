@@ -1,9 +1,16 @@
+//import 'dart:html';
+
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:image_picker/image_picker.dart';
 //import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 //import { query, orderBy, limit } from "firebase/firestore";
+import 'package:firebase_storage/firebase_storage.dart';
+//import 'package:path/path.dart';
 
 //import 'login.dart';
 
@@ -22,29 +29,64 @@ class _HomeState extends State<Home> {
   bool checkListOrGride = false;
   List allNotesData = [];
   String? sharedPreferenceEmail;
+  String profileImagePath = "";
+  String profileImageUpdateId = "";
+  var userDocumentId;
   ////
   ///
   ///
-  List<DocumentSnapshot> _notes = [];
+  // List<DocumentSnapshot> _notes = [];
   bool loadingProducts = false;
   DocumentSnapshot? lastDocument;
   ScrollController scrollController = ScrollController();
   bool gettingMoreProducts = false;
   bool moreProductsAvailable = true;
+  bool checkProfileImage = false;
+  int limitPerPage = 10;
+  late File profileImage;
+  String fileName = '';
 
   ///
   ///
   bool isFetchingNotes = true;
 
-// Fetch data from firebase
+  // Fetch data from firebase
+  Future<void> getProfileImagePath() async {
+    Query collectionReference = FirebaseFirestore.instance
+        .collection('users')
+        .where("email", isEqualTo: sharedPreferenceEmail);
+    QuerySnapshot querySnapshot = await collectionReference.get();
+    final notesAllData = querySnapshot.docs.map((data) => data.data()).toList();
+    print('sssssssssssssssssssssssssssssssssssssssssssssssssssss');
+    print(notesAllData);
+    print(sharedPreferenceEmail);
+
+    querySnapshot.docs.forEach((notesAllData) {
+      if (notesAllData['email'] == sharedPreferenceEmail) {
+        print(notesAllData['profileImage']);
+        setState(() {
+          profileImagePath = notesAllData['profileImage'];
+          profileImageUpdateId = notesAllData.id;
+        });
+      }
+    });
+    print(profileImagePath);
+  }
+
   Future<void> getNotesData() async {
     final prefs = await SharedPreferences.getInstance();
     sharedPreferenceEmail = prefs.getString('email')!;
+    //var url = prefs.getString('profileImagePath')!;
+    // print(url);
+    // setState(() {
+    //   profileImagePath = url;
+    //   print(profileImagePath);
+    // });
 
     Query collectionReference = FirebaseFirestore.instance
         .collection('notes')
         .orderBy("title", descending: true)
-        .limit(13)
+        .limit(limitPerPage)
         .where("trash", isEqualTo: false)
         .where("archived", isEqualTo: false)
         .where("email", isEqualTo: sharedPreferenceEmail);
@@ -62,7 +104,7 @@ class _HomeState extends State<Home> {
       lastDocument = querySnapshot.docs[querySnapshot.docs.length - 1];
     }
     print(lastDocument);
-    if (querySnapshot.docs.length < 8) {
+    if (querySnapshot.docs.length < limitPerPage) {
       moreProductsAvailable = false;
     }
 
@@ -101,22 +143,7 @@ class _HomeState extends State<Home> {
   }
 
   getMoreNotesData() async {
-    // if (isFetchingNotes == false) {
-    //   return;
-    // }
     isFetchingNotes = false;
-    // print("getmorenotes");
-    // if (moreProductsAvailable == false) {
-    //   print('moreproductsavailable');
-    //   return;
-    // }
-    // if (gettingMoreProducts == true) {
-    //   print('gettingmoreproducts');
-    //   return;
-    // }
-    // gettingMoreProducts = true;
-    // final prefs = await SharedPreferences.getInstance();
-    // sharedPreferenceEmail = prefs.getString('email')!;
 
     Query collectionReference = FirebaseFirestore.instance
         .collection('notes')
@@ -124,7 +151,7 @@ class _HomeState extends State<Home> {
         //.orderBy("note", descending: true)
 
         //  .orderBy('email')
-        .limit(13)
+        .limit(limitPerPage)
         .startAfterDocument(lastDocument!)
         .where("trash", isEqualTo: false)
         .where("archived", isEqualTo: false)
@@ -175,16 +202,65 @@ class _HomeState extends State<Home> {
     // setState(() {
     //   gettingMoreProducts = false;
     // });
-    if (querySnapshot.docs.length == 8) {
+    if (querySnapshot.docs.length == limitPerPage) {
       isFetchingNotes = true; ////////
     }
     // isFetchingNotes = false;
+  }
+
+  void getProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    var image =
+        await ImagePicker.platform.pickImage(source: ImageSource.gallery);
+    print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+    print(image);
+    if (image != null) {
+      setState(() {
+        profileImage = File(image.path);
+        fileName = profileImage.path.split('/').last;
+        //  fileName = basename(profileImage.path);
+        userDocumentId = prefs.getString('profileImageId');
+        if (prefs.getString('profileImageId') != "") {
+          upLoadImageToFirebase();
+        }
+      });
+      setState(() {
+        checkProfileImage = true;
+      });
+    }
+  }
+
+  upLoadImageToFirebase() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    Reference storageRefrence = FirebaseStorage.instance.ref().child(fileName);
+    final UploadTask uploadTask = storageRefrence.putFile(profileImage);
+    final TaskSnapshot downloadUrl = (await uploadTask);
+    final String url = await downloadUrl.ref.getDownloadURL();
+    print('///////////////////////////////////////////////');
+    print(url);
+    print(prefs.getString('profileImageId'));
+
+    FirebaseFirestore.instance
+        .collection("users")
+        .doc(prefs.getString('profileImageId'))
+        .update({"profileImage": url});
+    // getProfileImagePath();
+    if (profileImagePath != "") {
+      FirebaseStorage.instance.refFromURL(profileImagePath).delete();
+    }
+    setState(() {
+      //  var tempPath = url;
+      profileImagePath = url;
+    });
   }
 
   @override
   void initState() {
     super.initState();
     getNotesData();
+    getProfileImagePath();
 
     scrollController.addListener(() {
       double maxScroll = scrollController.position.maxScrollExtent;
@@ -208,8 +284,6 @@ class _HomeState extends State<Home> {
           elevation: 0.0,
           automaticallyImplyLeading: false,
           backgroundColor: Colors.white10,
-          //brightness: Brightness.light,
-          //foregroundColor: Colors.black,
           bottom: PreferredSize(
             preferredSize: Size.fromHeight(22),
             child: Container(
@@ -270,43 +344,11 @@ class _HomeState extends State<Home> {
                       icon: CircleAvatar(
                         backgroundColor: Colors.grey[400],
                         radius: 15,
+                        backgroundImage: profileImagePath != ""
+                            ? NetworkImage("$profileImagePath")
+                            : null,
                       ),
                       onPressed: () {
-                        // bool checkRoute = false;
-                        // showDialog(
-                        //     context: context,
-                        //     builder: (BuildContext context) {
-                        //       return AlertDialog(
-                        //         title: CircleAvatar(
-                        //           backgroundColor: Colors.grey[400],
-                        //         ),
-                        //         content: Text(sharedPreferenceEmail.toString()),
-                        //         actions: <Widget>[
-                        //           ElevatedButton(
-                        //               onPressed: () async {
-                        //                 SharedPreferences preferences =
-                        //                     await SharedPreferences
-                        //                         .getInstance();
-                        //                 await preferences.clear();
-                        //                 _googleSignIn
-                        //                     .signOut()
-                        //                     .then((value) => {})
-                        //                     .catchError((e) {});
-                        //                 checkRoute = true;
-                        //                 if (checkRoute) {
-                        //                   Navigator.pushNamed(
-                        //                       context, "/login");
-                        //                 }
-                        //                 Navigator.pop(context, 'Log Out');
-                        //                 //Navigator.push(
-                        //                 //     context,
-                        //                 //   pushNamed(context, '/login'));
-                        //               },
-                        //               child: Text('Log Out')),
-                        //         ],
-                        //       );
-                        //     });
-
                         showModalBottomSheet(
                             context: context,
                             builder: (BuildContext context) {
@@ -323,13 +365,34 @@ class _HomeState extends State<Home> {
                                               MainAxisAlignment.center,
                                           children: [
                                             IconButton(
-                                                iconSize: 50,
-                                                onPressed: () {},
-                                                icon: CircleAvatar(
-                                                  backgroundColor:
-                                                      Colors.grey[400],
-                                                  radius: 50,
-                                                )),
+                                              iconSize: 50,
+                                              onPressed: () {},
+                                              icon: CircleAvatar(
+                                                backgroundColor:
+                                                    Colors.grey[400],
+                                                radius: 30,
+                                                backgroundImage:
+                                                    profileImagePath != ""
+                                                        ? NetworkImage(
+                                                            "$profileImagePath")
+                                                        : null,
+                                                // child: checkProfileImage
+                                                //     ? Image.file(
+                                                //         profileImage,
+                                                //         fit: BoxFit.scaleDown,
+                                                //       )
+                                                //     : Image.asset(
+                                                //         "assets/images/note_images.jpeg"),
+                                              ),
+                                            ),
+                                            SizedBox(width: 5),
+                                            IconButton(
+                                                iconSize: 30,
+                                                onPressed: () {
+                                                  getProfileImage();
+                                                  Navigator.pop(context);
+                                                },
+                                                icon: Icon(Icons.edit))
                                           ],
                                         )),
                                       ),

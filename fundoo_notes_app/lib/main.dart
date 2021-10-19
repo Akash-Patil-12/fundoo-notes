@@ -1,15 +1,15 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:fundoo_notes_app/screens/add_Notes.dart';
+import 'package:fundoo_notes_app/screens/add_notes.dart';
 import 'package:fundoo_notes_app/screens/archived.dart';
-import 'package:fundoo_notes_app/screens/change_Password.dart';
-import 'package:fundoo_notes_app/screens/forget_Password.dart';
+import 'package:fundoo_notes_app/screens/change_password.dart';
+import 'package:fundoo_notes_app/screens/forget_password.dart';
 import 'package:fundoo_notes_app/screens/home.dart';
 import 'package:fundoo_notes_app/screens/login.dart';
-import 'package:fundoo_notes_app/screens/new_User.dart';
+import 'package:fundoo_notes_app/screens/new_user.dart';
 import 'package:fundoo_notes_app/screens/search_notes.dart';
 import 'package:fundoo_notes_app/screens/trash.dart';
-import 'package:fundoo_notes_app/screens/updateNotes.dart';
+import 'package:fundoo_notes_app/screens/update_notes.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

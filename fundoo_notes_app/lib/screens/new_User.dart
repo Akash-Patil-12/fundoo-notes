@@ -199,7 +199,8 @@ class _New_UserState extends State<New_User> {
                         "firstName": firstName.text,
                         "lastName": lastName.text,
                         "email": email.text,
-                        "password": password.text
+                        "password": password.text,
+                        "profileImage": ""
                       };
                       var snackBar = SnackBar(
                         content: Text("Register Successful"),
