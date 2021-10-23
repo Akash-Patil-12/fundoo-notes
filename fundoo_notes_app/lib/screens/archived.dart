@@ -12,6 +12,8 @@ class Archived extends StatefulWidget {
 
 class _ArchivedState extends State<Archived> {
   bool checkListOrGride = false;
+  late Color _color = Colors.white;
+
   String sharedPreferenceEmail = "";
   List<dynamic> allNotesData = [];
   Future<void> getNotesData() async {
@@ -80,6 +82,20 @@ class _ArchivedState extends State<Archived> {
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2, mainAxisSpacing: 2, crossAxisSpacing: 2),
                 itemBuilder: (BuildContext context, int index) {
+                  _color = Colors.white;
+                  print('???????????????????????????????????????????');
+                  print(allNotesData[index]['color']);
+                  if (allNotesData[index]['color'] != "") {
+                    print('/////////////');
+                    String valueString = allNotesData[index]['color']
+                        .toString()
+                        .split('(0x')[1]
+                        .split(')')[0];
+                    int value = int.parse(valueString, radix: 16);
+                    Color otherColor = new Color(value);
+                    _color = otherColor;
+                    print(_color);
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(),
                     child: InkWell(
@@ -95,10 +111,11 @@ class _ArchivedState extends State<Archived> {
                               'pin': allNotesData[index]['pin'],
                               'archived': allNotesData[index]['archived'],
                               'id': allNotesData[index]['id'],
-                              'rootSource': true
+                              'rootSource': 'archived'
                             });
                       },
                       child: Card(
+                        color: _color,
                         elevation: 1,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
@@ -135,6 +152,20 @@ class _ArchivedState extends State<Archived> {
           : ListView.builder(
               itemCount: allNotesData.length,
               itemBuilder: (BuildContext context, int index) {
+                _color = Colors.white;
+                print('???????????????????????????????????????????');
+                print(allNotesData[index]['color']);
+                if (allNotesData[index]['color'] != "") {
+                  print('/////////////');
+                  String valueString = allNotesData[index]['color']
+                      .toString()
+                      .split('(0x')[1]
+                      .split(')')[0];
+                  int value = int.parse(valueString, radix: 16);
+                  Color otherColor = new Color(value);
+                  _color = otherColor;
+                  print(_color);
+                }
                 return Padding(
                   padding:
                       const EdgeInsets.symmetric(vertical: 3, horizontal: 10),
@@ -149,10 +180,12 @@ class _ArchivedState extends State<Archived> {
                         'title': allNotesData[index]['title'],
                         'pin': allNotesData[index]['pin'],
                         'archived': allNotesData[index]['archived'],
-                        'id': allNotesData[index]['id']
+                        'id': allNotesData[index]['id'],
+                        'rootSource': 'archived'
                       });
                     },
                     child: Card(
+                        color: _color,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           side: BorderSide(color: Colors.black12, width: 1),

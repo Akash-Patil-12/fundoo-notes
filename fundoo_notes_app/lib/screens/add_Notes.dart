@@ -10,6 +10,19 @@ class AddNotes extends StatefulWidget {
 }
 
 class _AddNotesState extends State<AddNotes> {
+  List<Color> colors = [
+    Colors.white,
+    Colors.pink,
+    Colors.orange,
+    Colors.yellow,
+    Colors.green,
+    Colors.blueAccent,
+    Colors.grey,
+    Colors.purpleAccent,
+    Colors.blueGrey,
+  ];
+  //var colorSelected = Colors.green;
+  late Color _color = Colors.white;
   bool pin = false, archived = false;
   TextEditingController title = new TextEditingController();
   TextEditingController note = new TextEditingController();
@@ -33,6 +46,7 @@ class _AddNotesState extends State<AddNotes> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        backgroundColor: _color,
         appBar: AppBar(
           elevation: 0.0,
           automaticallyImplyLeading: false,
@@ -136,7 +150,79 @@ class _AddNotesState extends State<AddNotes> {
                               size: 25,
                               color: Colors.black.withOpacity(0.7),
                             ),
-                            onPressed: () {}),
+                            onPressed: () {
+                              showModalBottomSheet(
+                                  backgroundColor: _color,
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return Container(
+                                      height: 200,
+                                      color: Colors.white,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 30, top: 40),
+                                            child: Text('Colors'),
+                                          ),
+                                          Expanded(
+                                            child: ListView.builder(
+                                              shrinkWrap: true,
+                                              scrollDirection: Axis.horizontal,
+                                              itemCount: colors.length,
+                                              itemBuilder: (BuildContext
+                                                          context,
+                                                      int index) =>
+                                                  Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              15.0),
+                                                      child: InkWell(
+                                                        onTap: () {
+                                                          print(colors[index]);
+                                                          String valueString =
+                                                              colors[index]
+                                                                  .toString()
+                                                                  .split(
+                                                                      '(0x')[1]
+                                                                  .split(
+                                                                      ')')[0];
+                                                          int value = int.parse(
+                                                              valueString,
+                                                              radix: 16);
+                                                          Color otherColor =
+                                                              new Color(value);
+                                                          print(otherColor);
+                                                          setState(() {
+                                                            _color = otherColor;
+                                                          });
+                                                        },
+                                                        child: Container(
+                                                          height: 40,
+                                                          width: 40,
+                                                          decoration: BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              color:
+                                                                  colors[index],
+                                                              border: new Border
+                                                                      .all(
+                                                                  color: Colors
+                                                                      .black12,
+                                                                  width: 2.0)),
+                                                          // child: Center(
+                                                          //     child: Text('Text')),
+                                                        ),
+                                                      )),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  });
+                            }),
                       ],
                     ),
                   ),
@@ -269,7 +355,7 @@ class _AddNotesState extends State<AddNotes> {
       Map<String, dynamic> noteData = {
         "email": email,
         "firstName": firstName,
-        "color": '',
+        "color": _color.toString(),
         "note": note.text,
         "title": title.text,
         "trash": trash,
@@ -277,7 +363,7 @@ class _AddNotesState extends State<AddNotes> {
         "pin": pin
       };
       FirebaseFirestore.instance.collection("notes").add(noteData);
-      Navigator.pushNamed(context, '/home');
     }
+    Navigator.pushNamed(context, '/home');
   }
 }

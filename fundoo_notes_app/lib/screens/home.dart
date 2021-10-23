@@ -3,7 +3,10 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:fundoo_notes_app/main.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 //import 'package:intl/intl.dart';
@@ -32,6 +35,9 @@ class _HomeState extends State<Home> {
   String profileImagePath = "";
   String profileImageUpdateId = "";
   var userDocumentId;
+  late Color _color = Colors.white;
+  //late Color _colors;
+
   ////
   ///
   ///
@@ -273,6 +279,55 @@ class _HomeState extends State<Home> {
         }
       }
     });
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      RemoteNotification? notification = message.notification;
+      AndroidNotification? android = message.notification?.android;
+      if (notification != null && android != null) {
+        flutterLocalNotificationsPlugin.show(
+          notification.hashCode,
+          notification.title,
+          notification.body,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              channel.id,
+              channel.name,
+              channelDescription: channel.description,
+              color: Colors.blue,
+              playSound: true,
+              icon: '@mipmap/ic_launcher',
+            ),
+          ),
+        );
+      }
+    });
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      RemoteNotification? notification = message.notification;
+      AndroidNotification? android = message.notification?.android;
+      if (notification != null && android != null) {
+        showDialog(
+            context: context,
+            builder: (_) {
+              return AlertDialog(
+                title: Text(notification.title.toString()),
+                content: Text(notification.body.toString()),
+              );
+            });
+      }
+    });
+  }
+
+  void showNotification() {
+    flutterLocalNotificationsPlugin.show(
+        0,
+        "Testing",
+        "How are your ?",
+        NotificationDetails(
+            android: AndroidNotificationDetails(channel.id, channel.name,
+                channelDescription: channel.description,
+                importance: Importance.high,
+                color: Colors.blue,
+                playSound: true,
+                icon: '@mipmap/ic_launcher')));
   }
 
   @override
@@ -455,6 +510,20 @@ class _HomeState extends State<Home> {
                           mainAxisSpacing: 2,
                           crossAxisSpacing: 2),
                       itemBuilder: (BuildContext context, int index) {
+                        _color = Colors.white;
+                        print('???????????????????????????????????????????');
+                        print(allNotesData[index]['color']);
+                        if (allNotesData[index]['color'] != "") {
+                          print('/////////////');
+                          String valueString = allNotesData[index]['color']
+                              .toString()
+                              .split('(0x')[1]
+                              .split(')')[0];
+                          int value = int.parse(valueString, radix: 16);
+                          Color otherColor = new Color(value);
+                          _color = otherColor;
+                          print(_color);
+                        }
                         return Padding(
                           padding: const EdgeInsets.only(),
                           child: InkWell(
@@ -471,10 +540,11 @@ class _HomeState extends State<Home> {
                                     'id': allNotesData[index]['id'],
                                     'pin': allNotesData[index]['pin'],
                                     'archived': allNotesData[index]['archived'],
-                                    'rootSource': false
+                                    'rootSource': 'home'
                                   });
                             },
                             child: Card(
+                              color: _color,
                               elevation: 1,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10)),
@@ -514,6 +584,35 @@ class _HomeState extends State<Home> {
                     //  reverse: false,
                     itemCount: allNotesData.length,
                     itemBuilder: (BuildContext context, int index) {
+                      _color = Colors.white;
+                      print('???????????????????????????????????????????');
+                      print(allNotesData[index]['color']);
+                      if (allNotesData[index]['color'] != "") {
+                        print('/////////////');
+                        String valueString = allNotesData[index]['color']
+                            .toString()
+                            .split('(0x')[1]
+                            .split(')')[0];
+                        int value = int.parse(valueString, radix: 16);
+                        Color otherColor = new Color(value);
+                        _color = otherColor;
+                        print(_color);
+                      }
+                      // if (allNotesData[index]['color'] != "") {
+                      //   String valueString = allNotesData[index]['color']
+                      //       .toString()
+                      //       .split('Color(0x')[1]
+                      //       .split(')')[0];
+                      //   int value = int.parse(valueString, radix: 16);
+                      //   Color otherColor = new Color(value);
+                      //   setState(() {
+                      //     _colors = otherColor;
+                      //   });
+                      // } else {
+                      //   setState(() {
+                      //     _colors = Colors.white;
+                      //   });
+                      // }
                       return Padding(
                         padding: const EdgeInsets.symmetric(
                             vertical: 3, horizontal: 10),
@@ -530,11 +629,13 @@ class _HomeState extends State<Home> {
                                   'pin': allNotesData[index]['pin'],
                                   'archived': allNotesData[index]['archived'],
                                   'id': allNotesData[index]['id'],
-                                  'rootSource': false
+                                  'rootSource': 'home'
                                 });
                           },
                           child: Card(
                               elevation: 0,
+                              color: _color,
+                              // new Color(allNotesData[index]['color']),
                               shape: RoundedRectangleBorder(
                                 side:
                                     BorderSide(color: Colors.black12, width: 1),
@@ -600,7 +701,9 @@ class _HomeState extends State<Home> {
                         size: 25,
                         color: Colors.black.withOpacity(0.7),
                       ),
-                      onPressed: () {}),
+                      onPressed: () {
+                        showNotification();
+                      }),
                   IconButton(
                       icon: Icon(
                         Icons.mic,

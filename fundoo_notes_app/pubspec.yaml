@@ -36,6 +36,8 @@ dependencies:
   shared_preferences: ^2.0.8
   image_picker: ^0.8.4+2
   firebase_storage: ^10.0.5
+  firebase_messaging: ^10.0.8
+  flutter_local_notifications: ^9.0.0
   
 dev_dependencies:
   flutter_test:

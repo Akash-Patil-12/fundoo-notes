@@ -19,6 +19,7 @@ class SearchNotesState extends State<SearchNotes> {
   late String sharedPreferenceEmail;
   List allNotesData = [];
   List searchNotes = [];
+  late Color _color = Colors.white;
 
   Future<void> getNotesData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -86,20 +87,66 @@ class SearchNotesState extends State<SearchNotes> {
         foregroundColor: Colors.black,
         leading: IconButton(
             onPressed: () {
-              // updateNotes();
+              Navigator.pushNamed(context, '/home');
             },
             icon: Icon(Icons.arrow_back)),
-        title: TextField(onChanged: (value) {
-          searchNotesData(value);
-        }),
+        title: TextField(
+          autofocus: true,
+          style: TextStyle(fontSize: 22),
+          decoration: new InputDecoration(
+            hintText: 'Search Notes',
+            border: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            errorBorder: InputBorder.none,
+            disabledBorder: InputBorder.none,
+          ),
+          onChanged: (value) {
+            searchNotesData(value);
+          },
+        ),
+        bottom: PreferredSize(
+            child: Container(
+              color: Colors.black,
+              height: 1.0,
+            ),
+            preferredSize: Size.fromHeight(1.0)),
       ),
       body: ListView.builder(
           itemCount: searchNotes.length,
           itemBuilder: (BuildContext context, int index) {
+            _color = Colors.white;
+            print('???????????????????????????????????????????');
+            print(searchNotes[index]['color']);
+            if (searchNotes[index]['color'] != "") {
+              print('/////////////');
+              String valueString = searchNotes[index]['color']
+                  .toString()
+                  .split('(0x')[1]
+                  .split(')')[0];
+              int value = int.parse(valueString, radix: 16);
+              Color otherColor = new Color(value);
+              _color = otherColor;
+              print(_color);
+            }
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 10),
               child: InkWell(
+                onTap: () {
+                  Navigator.pushNamed(context, '/updateNotes', arguments: {
+                    'email': searchNotes[index]['email'],
+                    'firstName': searchNotes[index]['firstName'],
+                    'color': searchNotes[index]['color'],
+                    'note': searchNotes[index]['note'],
+                    'title': searchNotes[index]['title'],
+                    'pin': searchNotes[index]['pin'],
+                    'archived': searchNotes[index]['archived'],
+                    'id': searchNotes[index]['id'],
+                    'rootSource': 'searchNotes'
+                  });
+                },
                 child: Card(
+                    color: _color,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       side: BorderSide(color: Colors.black12, width: 1),

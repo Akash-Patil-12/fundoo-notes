@@ -11,7 +11,19 @@ class UpdateNotes extends StatefulWidget {
 }
 
 class _UpdateNotesState extends State<UpdateNotes> {
-  late bool checkPin = false, checkArchived = true;
+  List<Color> colors = [
+    Colors.white,
+    Colors.pink,
+    Colors.orange,
+    Colors.yellow,
+    Colors.green,
+    Colors.blueAccent,
+    Colors.grey,
+    Colors.purpleAccent,
+    Colors.blueGrey,
+  ];
+  late bool checkPin = false, checkArchived = true, checkFirst = true;
+  late Color _color = Colors.white;
 
   Map notesData = {};
   TextEditingController title = new TextEditingController();
@@ -43,7 +55,18 @@ class _UpdateNotesState extends State<UpdateNotes> {
     print('...' + notesData['pin'].toString());
     checkPin = notesData['pin'];
     checkArchived = notesData['archived'];
-
+    if (notesData['color'] != "" && checkFirst == true) {
+      print('/////////////');
+      String valueString =
+          notesData['color'].toString().split('(0x')[1].split(')')[0];
+      int value = int.parse(valueString, radix: 16);
+      Color otherColor = new Color(value);
+      setState(() {
+        _color = otherColor;
+        checkFirst = false;
+      });
+      print(_color);
+    }
     // if (notesData['pin'] == true) {
     //   setState(() {
     //     checkPin = true;
@@ -56,6 +79,7 @@ class _UpdateNotesState extends State<UpdateNotes> {
     print("update.......$notesData");
 
     return Scaffold(
+        backgroundColor: _color,
         appBar: AppBar(
           elevation: 0.0,
           automaticallyImplyLeading: false,
@@ -179,41 +203,71 @@ class _UpdateNotesState extends State<UpdateNotes> {
                               color: Colors.black.withOpacity(0.7),
                             ),
                             onPressed: () {
-                              //   showModalBottomSheet(
-                              //       backgroundColor: _color,
-                              //       context: context,
-                              //       builder: (context) {
-                              //         return Container(
-                              //           height: 120,
-                              //           child: SizedBox(
-                              //             width: 50,
-                              //             height: 50,
-                              //             child:(
-                              //               onSelectedColor: (value) {
-                              //                 print(value);
-                              //                 setState(() {
-                              //                   _color = value;
-                              //                 });
-                              //               },
-                              //               availableColors: [
-                              //                 Colors.white,
-                              //                 Colors.blueAccent,
-                              //                 Colors.redAccent,
-                              //                 Colors.yellowAccent,
-                              //                 Colors.pinkAccent,
-                              //                 Colors.purpleAccent,
-                              //                 Colors.orangeAccent,
-                              //                 Colors.indigoAccent,
-                              //                 Colors.cyan,
-                              //                 Colors.brown,
-                              //                 Colors.blueGrey,
-                              //                 Colors.green,
-                              //               ],
-                              //               initialColor: Colors.white,
-                              //             ),
-                              //           ),
-                              //         );
-                              //       });
+                              showModalBottomSheet(
+                                  backgroundColor: _color,
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return Container(
+                                      height: 200,
+                                      color: Colors.white,
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: ListView.builder(
+                                              shrinkWrap: true,
+                                              scrollDirection: Axis.horizontal,
+                                              itemCount: colors.length,
+                                              itemBuilder: (BuildContext
+                                                          context,
+                                                      int index) =>
+                                                  Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              20.0),
+                                                      child: InkWell(
+                                                        onTap: () {
+                                                          print(
+                                                              '{{{{{{{{{{{{{{{{{{{{{{{{[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[');
+                                                          String valueString =
+                                                              colors[index]
+                                                                  .toString()
+                                                                  .split(
+                                                                      '(0x')[1]
+                                                                  .split(
+                                                                      ')')[0];
+                                                          int value = int.parse(
+                                                              valueString,
+                                                              radix: 16);
+                                                          Color otherColor =
+                                                              new Color(value);
+                                                          print(otherColor);
+                                                          setState(() {
+                                                            _color = otherColor;
+                                                          });
+                                                        },
+                                                        child: Container(
+                                                          height: 40,
+                                                          width: 40,
+                                                          decoration: BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              color:
+                                                                  colors[index],
+                                                              border: new Border
+                                                                      .all(
+                                                                  color: Colors
+                                                                      .black12,
+                                                                  width: 2.0)),
+                                                          // child: Center(
+                                                          //     child: Text('Text')),
+                                                        ),
+                                                      )),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  });
                             }),
                       ],
                     ),
@@ -357,7 +411,7 @@ class _UpdateNotesState extends State<UpdateNotes> {
       Map<String, dynamic> noteData = {
         "email": notesData['email'],
         "firstName": notesData['firstName'],
-        "color": '',
+        "color": _color.toString(),
         "note": note.text,
         "title": title.text,
         "trash": trash,
@@ -368,9 +422,13 @@ class _UpdateNotesState extends State<UpdateNotes> {
           .collection("notes")
           .doc(notesData['id'])
           .update(noteData);
-      if (notesData['rootSource'] == false) {
+      if (notesData['rootSource'] == 'home') {
         Navigator.pushNamed(context, '/home');
-      } else {
+      }
+      if (notesData['rootSource'] == 'searchNotes') {
+        Navigator.pushNamed(context, '/searchNotes');
+      }
+      if (notesData['rootSource'] == 'archived') {
         Navigator.pushNamed(context, '/archived');
       }
     }
