@@ -14,15 +14,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 //import { query, orderBy, limit } from "firebase/firestore";
 import 'package:firebase_storage/firebase_storage.dart';
 //import 'package:path/path.dart';
-
+//import 'globals.dart' as globals;
 //import 'login.dart';
 
 class Home extends StatefulWidget {
   Home({Key? key}) : super(key: key);
-
   @override
   _HomeState createState() => _HomeState();
 }
+
+List allLable = [];
 
 class _HomeState extends State<Home> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
@@ -31,6 +32,7 @@ class _HomeState extends State<Home> {
 
   bool checkListOrGride = false;
   List allNotesData = [];
+
   String? sharedPreferenceEmail;
   String profileImagePath = "";
   String profileImageUpdateId = "";
@@ -55,6 +57,26 @@ class _HomeState extends State<Home> {
   ///
   ///
   bool isFetchingNotes = true;
+
+  //List allLable = [];
+  Future<void> getLables() async {
+    allLable.clear();
+    Query collectionReference = FirebaseFirestore.instance.collection('lable');
+    QuerySnapshot querySnapshot = await collectionReference.get();
+    final allLables = querySnapshot.docs.map((data) => data.data()).toList();
+    print('sssssssssssssssssssssssssssssssssssssssssssssssssssss');
+    print(allLables);
+    querySnapshot.docs.forEach((allLables) {
+      var map = {'lable': allLables['lable']};
+      // setState(() {
+      //  var allLable;
+      allLable.add(map);
+      // });
+    });
+    print('...........');
+    print(allLable);
+    // searchLable = allLable;
+  }
 
   // Fetch data from firebase
   Future<void> getProfileImagePath() async {
@@ -267,6 +289,7 @@ class _HomeState extends State<Home> {
     super.initState();
     getNotesData();
     getProfileImagePath();
+    getLables();
 
     scrollController.addListener(() {
       double maxScroll = scrollController.position.maxScrollExtent;
@@ -770,6 +793,71 @@ class drawer extends StatelessWidget {
           ),
           title: Text(
             'Reminders',
+            style: TextStyle(fontSize: 20),
+          ),
+        ),
+        if (allLable.length != 0)
+          ListTile(
+            leading: Text(
+              'Create new lable',
+              style: TextStyle(fontSize: 15),
+            ),
+            trailing: Text('EDIT', style: TextStyle(fontSize: 15)),
+            onTap: () {
+              Navigator.pushNamed(context, '/editLable');
+            },
+          ),
+//
+        new Expanded(
+          flex: 1,
+          child: ListView.builder(
+              physics: ScrollPhysics(),
+              //  physics: NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              itemCount: allLable.length,
+              itemBuilder: (BuildContext context, int index) {
+                // var value;
+                return Padding(
+                  padding: const EdgeInsets.only(left: 20, bottom: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Icon(Icons.label_outline),
+                      SizedBox(width: 30),
+                      Text(
+                        allLable[index]['lable'],
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      // Expanded(
+                      //   child: Row(
+                      //     mainAxisAlignment: MainAxisAlignment.end,
+                      //     //crossAxisAlignment: CrossAxisAlignment.end,
+                      //     children: [
+                      //       //new Spacer(),
+                      //       Checkbox(
+                      //         value: this.checkboxValue,
+                      //         onChanged: (bool? value) {
+                      //           setState(() {
+                      //             this.checkboxValue = value!;
+                      //           });
+                      //         },
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
+                    ],
+                  ),
+                );
+              }),
+        ),
+        //
+        ListTile(
+          leading: Icon(
+            Icons.add,
+            size: 20,
+          ),
+          title: Text(
+            'Create new lable',
             style: TextStyle(fontSize: 20),
           ),
         ),

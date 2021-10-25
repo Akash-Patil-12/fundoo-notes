@@ -5,6 +5,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fundoo_notes_app/screens/add_notes.dart';
 import 'package:fundoo_notes_app/screens/archived.dart';
 import 'package:fundoo_notes_app/screens/change_password.dart';
+import 'package:fundoo_notes_app/screens/create_lable.dart';
+import 'package:fundoo_notes_app/screens/edit_lable.dart';
 import 'package:fundoo_notes_app/screens/forget_password.dart';
 import 'package:fundoo_notes_app/screens/home.dart';
 import 'package:fundoo_notes_app/screens/login.dart';
@@ -60,7 +62,9 @@ class MyApp extends StatelessWidget {
             '/updateNotes': (context) => UpdateNotes(),
             '/trash': (context) => Trash(),
             '/archived': (context) => Archived(),
-            '/searchNotes': (context) => SearchNotes()
+            '/searchNotes': (context) => SearchNotes(),
+            '/createLable': (context) => Create_Lable(),
+            '/editLable':(context)=>Edit_Lable()
           },
         ));
   }

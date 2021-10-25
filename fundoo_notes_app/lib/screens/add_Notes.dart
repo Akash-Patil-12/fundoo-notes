@@ -335,6 +335,31 @@ class _AddNotesState extends State<AddNotes> {
                                                 Navigator.pop(context);
                                               },
                                             ),
+                                            InkWell(
+                                              child: Container(
+                                                child: Row(
+                                                  children: [
+                                                    IconButton(
+                                                        onPressed: () {
+                                                          Navigator.pushNamed(
+                                                              context,
+                                                              '/createLable');
+                                                        },
+                                                        icon: Icon(Icons
+                                                            .label_outline)),
+                                                    SizedBox(
+                                                      width: 25,
+                                                    ),
+                                                    Text('Lable'),
+                                                  ],
+                                                ),
+                                              ),
+                                              onTap: () {
+                                                print('Lable');
+                                                Navigator.pushNamed(
+                                                    context, '/createLable');
+                                              },
+                                            ),
                                           ],
                                         ),
                                       ),
