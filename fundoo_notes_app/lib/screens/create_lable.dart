@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Create_Lable extends StatefulWidget {
   Create_Lable({Key? key}) : super(key: key);
@@ -12,18 +13,34 @@ class _Create_LableState extends State<Create_Lable> {
   String lableName = "";
   List allLable = [];
   List searchLable = [];
-  bool checkboxValue = false;
-
+  List<String> selectedLable = [];
+  List<String> selectedLables = [];
   TextEditingController createLable = new TextEditingController();
 
   Future<void> getLables() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // if (prefs.containsKey('selectedLables') == true &&
+    //     prefs.getStringList('selectedLables') != null) {
+    //   selectedLables = prefs.getStringList('selectedLables')!.cast<String>();
+    //   selectedLable = selectedLables;
+    // }
+    // if (prefs.containsKey('updateLable') == true &&
+    //     prefs.getStringList('updateLable') != null) {
+    //   selectedLables = prefs.getStringList('updateLable')!.cast<String>();
+    //   selectedLable = selectedLables;
+    // }
     Query collectionReference = FirebaseFirestore.instance.collection('lable');
     QuerySnapshot querySnapshot = await collectionReference.get();
     final allLables = querySnapshot.docs.map((data) => data.data()).toList();
     print('sssssssssssssssssssssssssssssssssssssssssssssssssssss');
     print(allLables);
     querySnapshot.docs.forEach((allLables) {
-      var map = {'lable': allLables['lable']};
+      bool setvalue = false;
+      if (selectedLables.contains(allLables['lable'])) {
+        setvalue = true;
+      }
+      var map = {'lable': allLables['lable'], 'isCheckedValue': setvalue};
       setState(() {
         allLable.add(map);
       });
@@ -49,8 +66,31 @@ class _Create_LableState extends State<Create_Lable> {
           backgroundColor: Colors.white10,
           foregroundColor: Colors.black,
           leading: IconButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/home');
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                prefs.setStringList('selectedLables', selectedLable);
+
+                // if (prefs.containsKey('updateLable') == true &&
+                //     prefs.getStringList('updateLable') != null) {
+                //   // Navigator.pushNamed(context, '/updateNotes', arguments: {
+                //   //   'email': prefs.getString('emailUpdate'),
+                //   //   'firstName': prefs.getString('firstNameUpdate'),
+                //   //   'color': prefs.getString('colorUpdate'),
+                //   //   'note': prefs.getString('noteUpdate'),
+                //   //   'title': prefs.getString('titleUpdate'),
+                //   //   'pin': prefs.getBool('pinUpdate'),
+                //   //   'archived': prefs.getBool('archivedUpdate'),
+                //   //   'id': prefs.getString('idUpdate'),
+                //   //   'lables': selectedLable,
+                //   //   'rootSource': 'home'
+                //   // });
+                //   print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+                //   print(prefs.getString('firstNameUpdate'));
+                // }
+                Navigator.pushNamed(context, '/addNotes',
+                    arguments: {'selectedLables': selectedLable});
+
+                //  final prefs = await SharedPreferences.getInstance();
               },
               icon: Icon(Icons.arrow_back)),
           title: TextField(
@@ -122,8 +162,11 @@ class _Create_LableState extends State<Create_Lable> {
                     FirebaseFirestore.instance.collection("lable").add(lable);
                     // getLables();
 
-                    var map = {'lable': lableName};
+                    var map = {'lable': lableName, 'isCheckedValue': true};
                     setState(() {
+                      selectedLable.add(lableName);
+                      print(selectedLable);
+                      // searchLable.add(map);
                       allLable.add(map);
                       searchLable = allLable;
                       lableName = "";
@@ -157,10 +200,29 @@ class _Create_LableState extends State<Create_Lable> {
                               children: [
                                 //new Spacer(),
                                 Checkbox(
-                                  value: this.checkboxValue,
+                                  value:
+                                      // selectedLables
+                                      //         .contains(searchLable[index]['lable'])
+                                      // ? true
+                                      searchLable[index]['isCheckedValue'],
                                   onChanged: (bool? value) {
+                                    if (value == true) {
+                                      print('.........true');
+                                      selectedLable
+                                          .add(searchLable[index]['lable']);
+                                      print(selectedLable);
+                                    } else {
+                                      print('.......false');
+                                      if (selectedLable.contains(
+                                          searchLable[index]['lable'])) {
+                                        selectedLable.remove(
+                                            searchLable[index]['lable']);
+                                        print(selectedLable);
+                                      }
+                                    }
                                     setState(() {
-                                      this.checkboxValue = value!;
+                                      this.searchLable[index]
+                                          ['isCheckedValue'] = value!;
                                     });
                                   },
                                 ),

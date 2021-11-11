@@ -1,5 +1,6 @@
 //import 'dart:html';
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,15 +8,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fundoo_notes_app/main.dart';
+import 'package:fundoo_notes_app/services/user-services/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
-//import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-//import { query, orderBy, limit } from "firebase/firestore";
 import 'package:firebase_storage/firebase_storage.dart';
-//import 'package:path/path.dart';
-//import 'globals.dart' as globals;
-//import 'login.dart';
 
 class Home extends StatefulWidget {
   Home({Key? key}) : super(key: key);
@@ -38,12 +35,6 @@ class _HomeState extends State<Home> {
   String profileImageUpdateId = "";
   var userDocumentId;
   late Color _color = Colors.white;
-  //late Color _colors;
-
-  ////
-  ///
-  ///
-  // List<DocumentSnapshot> _notes = [];
   bool loadingProducts = false;
   DocumentSnapshot? lastDocument;
   ScrollController scrollController = ScrollController();
@@ -53,12 +44,9 @@ class _HomeState extends State<Home> {
   int limitPerPage = 10;
   late File profileImage;
   String fileName = '';
-
-  ///
-  ///
+  List getNotesLables = [];
   bool isFetchingNotes = true;
-
-  //List allLable = [];
+  List<Notes> templist = [];
   Future<void> getLables() async {
     allLable.clear();
     Query collectionReference = FirebaseFirestore.instance.collection('lable');
@@ -68,14 +56,10 @@ class _HomeState extends State<Home> {
     print(allLables);
     querySnapshot.docs.forEach((allLables) {
       var map = {'lable': allLables['lable']};
-      // setState(() {
-      //  var allLable;
       allLable.add(map);
-      // });
     });
     print('...........');
     print(allLable);
-    // searchLable = allLable;
   }
 
   // Fetch data from firebase
@@ -104,13 +88,6 @@ class _HomeState extends State<Home> {
   Future<void> getNotesData() async {
     final prefs = await SharedPreferences.getInstance();
     sharedPreferenceEmail = prefs.getString('email')!;
-    //var url = prefs.getString('profileImagePath')!;
-    // print(url);
-    // setState(() {
-    //   profileImagePath = url;
-    //   print(profileImagePath);
-    // });
-
     Query collectionReference = FirebaseFirestore.instance
         .collection('notes')
         .orderBy("title", descending: true)
@@ -118,15 +95,10 @@ class _HomeState extends State<Home> {
         .where("trash", isEqualTo: false)
         .where("archived", isEqualTo: false)
         .where("email", isEqualTo: sharedPreferenceEmail);
-    //.limit(8);
-    //.orderBy("title", descending: true);
-    //.orderBy("title");
     setState(() {
       loadingProducts = true; /////////
     });
-    // loadingProducts = true; /////////
     QuerySnapshot querySnapshot = await collectionReference.get();
-    // _notes = querySnapshot.docs;
     print('........');
     if (querySnapshot.docs.length > 0) {
       lastDocument = querySnapshot.docs[querySnapshot.docs.length - 1];
@@ -135,9 +107,6 @@ class _HomeState extends State<Home> {
     if (querySnapshot.docs.length < limitPerPage) {
       moreProductsAvailable = false;
     }
-
-    ///
-
     final notesAllData = querySnapshot.docs.map((data) => data.data()).toList();
     print(
         '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
@@ -152,40 +121,31 @@ class _HomeState extends State<Home> {
         'title': notesAllData['title'],
         'pin': notesAllData['pin'],
         'archived': notesAllData['archived'],
-        'id': notesAllData.id
+        'id': notesAllData.id,
+        'lables': notesAllData['lables']
       };
       setState(() {
         allNotesData.add(map);
-        // allNotesData.sort();
-        // allNotesData = allNotesData.reversed.toList();
       });
       print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
       print(allNotesData);
     });
     print(allNotesData);
     setState(() {
-      // allNotesData.map.keys.toList()..sort();
-      // allNotesData.sort((a, b) => a.compareTo(b));
       loadingProducts = false;
     });
   }
 
   getMoreNotesData() async {
     isFetchingNotes = false;
-
     Query collectionReference = FirebaseFirestore.instance
         .collection('notes')
         .orderBy("title", descending: true)
-        //.orderBy("note", descending: true)
-
-        //  .orderBy('email')
         .limit(limitPerPage)
         .startAfterDocument(lastDocument!)
         .where("trash", isEqualTo: false)
         .where("archived", isEqualTo: false)
         .where("email", isEqualTo: sharedPreferenceEmail);
-    // .limit(8);
-    // .orderBy("title", descending: true)
 
     QuerySnapshot querySnapshot = await collectionReference.get();
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
@@ -197,9 +157,6 @@ class _HomeState extends State<Home> {
     if (querySnapshot.docs.length > 0) {
       lastDocument = querySnapshot.docs[querySnapshot.docs.length - 1];
     }
-
-    ///
-
     final notesAllData = querySnapshot.docs.map((data) => data.data()).toList();
     print(
         '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
@@ -214,26 +171,19 @@ class _HomeState extends State<Home> {
         'title': notesAllData['title'],
         'pin': notesAllData['pin'],
         'archived': notesAllData['archived'],
+        'lables': notesAllData['lables'],
         'id': notesAllData.id
       };
-      // print('more ,,,,,,,,');
-      // print(map);
       setState(() {
         allNotesData.add(map);
-        //allNotesData.sort();
-        // allNotesData = allNotesData.reversed.toList();
       });
       print("''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
       print(allNotesData);
     });
     print(allNotesData);
-    // setState(() {
-    //   gettingMoreProducts = false;
-    // });
     if (querySnapshot.docs.length == limitPerPage) {
       isFetchingNotes = true; ////////
     }
-    // isFetchingNotes = false;
   }
 
   void getProfileImage() async {
@@ -247,7 +197,6 @@ class _HomeState extends State<Home> {
       setState(() {
         profileImage = File(image.path);
         fileName = profileImage.path.split('/').last;
-        //  fileName = basename(profileImage.path);
         userDocumentId = prefs.getString('profileImageId');
         if (prefs.getString('profileImageId') != "") {
           upLoadImageToFirebase();
@@ -261,7 +210,6 @@ class _HomeState extends State<Home> {
 
   upLoadImageToFirebase() async {
     final prefs = await SharedPreferences.getInstance();
-
     Reference storageRefrence = FirebaseStorage.instance.ref().child(fileName);
     final UploadTask uploadTask = storageRefrence.putFile(profileImage);
     final TaskSnapshot downloadUrl = (await uploadTask);
@@ -269,17 +217,14 @@ class _HomeState extends State<Home> {
     print('///////////////////////////////////////////////');
     print(url);
     print(prefs.getString('profileImageId'));
-
     FirebaseFirestore.instance
         .collection("users")
         .doc(prefs.getString('profileImageId'))
         .update({"profileImage": url});
-    // getProfileImagePath();
     if (profileImagePath != "") {
       FirebaseStorage.instance.refFromURL(profileImagePath).delete();
     }
     setState(() {
-      //  var tempPath = url;
       profileImagePath = url;
     });
   }
@@ -290,7 +235,6 @@ class _HomeState extends State<Home> {
     getNotesData();
     getProfileImagePath();
     getLables();
-
     scrollController.addListener(() {
       double maxScroll = scrollController.position.maxScrollExtent;
       double currentScroll = scrollController.position.pixels;
@@ -385,19 +329,12 @@ class _HomeState extends State<Home> {
                         size: 30,
                       ),
                       onPressed: () {
-                        //Scaffold.of(context).openEndDrawer();
                         _scaffoldKey.currentState?.openDrawer();
                       }),
                   SizedBox(
                     width: 0,
                   ),
                   Expanded(
-                    // child: TextField(
-                    //   decoration: InputDecoration.collapsed(
-                    //     hintText: "Search your notes",
-                    //   ),
-                    //   onChanged: (value) {},
-                    // ),
                     child: InkWell(
                       child: Text('Search your notes'),
                       onTap: () {
@@ -454,13 +391,6 @@ class _HomeState extends State<Home> {
                                                         ? NetworkImage(
                                                             "$profileImagePath")
                                                         : null,
-                                                // child: checkProfileImage
-                                                //     ? Image.file(
-                                                //         profileImage,
-                                                //         fit: BoxFit.scaleDown,
-                                                //       )
-                                                //     : Image.asset(
-                                                //         "assets/images/note_images.jpeg"),
                                               ),
                                             ),
                                             SizedBox(width: 5),
@@ -510,8 +440,6 @@ class _HomeState extends State<Home> {
                                 ),
                               );
                             });
-
-////////////////////////////
                       }),
                 ],
               ),
@@ -546,6 +474,13 @@ class _HomeState extends State<Home> {
                           Color otherColor = new Color(value);
                           _color = otherColor;
                           print(_color);
+                        }
+                        if (allNotesData[index]['lables'] != null) {
+                          print(
+                              ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+                          print(allNotesData[index]['lables']);
+                          getNotesLables = allNotesData[index]['lables'];
+                          print(getNotesLables[0]);
                         }
                         return Padding(
                           padding: const EdgeInsets.only(),
@@ -590,7 +525,27 @@ class _HomeState extends State<Home> {
                                         Text(allNotesData[index]['note'],
                                             style: TextStyle(
                                               fontSize: 15,
-                                            ))
+                                            )),
+                                        ListView.builder(
+                                            shrinkWrap: true,
+                                            itemCount: getNotesLables.length,
+                                            itemBuilder: (BuildContext context,
+                                                int index) {
+                                              return Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: InkWell(
+                                                  child: Text(
+                                                    getNotesLables[index],
+                                                    style: TextStyle(
+                                                      fontSize: 20,
+                                                      backgroundColor:
+                                                          Colors.grey,
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            })
                                       ],
                                     ),
                                   ),
@@ -604,7 +559,6 @@ class _HomeState extends State<Home> {
                   )
                 : ListView.builder(
                     controller: scrollController, ////
-                    //  reverse: false,
                     itemCount: allNotesData.length,
                     itemBuilder: (BuildContext context, int index) {
                       _color = Colors.white;
@@ -621,27 +575,17 @@ class _HomeState extends State<Home> {
                         _color = otherColor;
                         print(_color);
                       }
-                      // if (allNotesData[index]['color'] != "") {
-                      //   String valueString = allNotesData[index]['color']
-                      //       .toString()
-                      //       .split('Color(0x')[1]
-                      //       .split(')')[0];
-                      //   int value = int.parse(valueString, radix: 16);
-                      //   Color otherColor = new Color(value);
-                      //   setState(() {
-                      //     _colors = otherColor;
-                      //   });
-                      // } else {
-                      //   setState(() {
-                      //     _colors = Colors.white;
-                      //   });
-                      // }
+                      if (allNotesData[index]['lables'] != null) {
+                        print(";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+                        print(allNotesData[index]['lables']);
+                        getNotesLables = allNotesData[index]['lables'];
+                        print(getNotesLables[0]);
+                      }
                       return Padding(
                         padding: const EdgeInsets.symmetric(
                             vertical: 3, horizontal: 10),
                         child: InkWell(
                           onTap: () {
-                            //   print(allNotesData[index]);
                             Navigator.pushNamed(context, '/updateNotes',
                                 arguments: {
                                   'email': allNotesData[index]['email'],
@@ -652,13 +596,13 @@ class _HomeState extends State<Home> {
                                   'pin': allNotesData[index]['pin'],
                                   'archived': allNotesData[index]['archived'],
                                   'id': allNotesData[index]['id'],
+                                  'lables': allNotesData[index]['lables'],
                                   'rootSource': 'home'
                                 });
                           },
                           child: Card(
                               elevation: 0,
                               color: _color,
-                              // new Color(allNotesData[index]['color']),
                               shape: RoundedRectangleBorder(
                                 side:
                                     BorderSide(color: Colors.black12, width: 1),
@@ -680,7 +624,26 @@ class _HomeState extends State<Home> {
                                     Text(
                                       allNotesData[index]['note'],
                                       style: TextStyle(fontSize: 15),
-                                    )
+                                    ),
+                                    ListView.builder(
+                                        shrinkWrap: true,
+                                        itemCount: getNotesLables.length,
+                                        itemBuilder:
+                                            (BuildContext context, int index) {
+                                          return Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: InkWell(
+                                              child: Text(
+                                                // "hi",
+                                                getNotesLables[index],
+                                                style: TextStyle(
+                                                  fontSize: 20,
+                                                  backgroundColor: Colors.grey,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        })
                                   ],
                                 ),
                               ))),
@@ -764,12 +727,7 @@ class drawer extends StatelessWidget {
           'Keep Notes',
           style: TextStyle(fontSize: 35, color: Colors.yellow[700]),
         ))),
-        // ListTile(
-        //   title: Text(
-        //     'Keep Notes',
-        //     style: TextStyle(fontSize: 24),
-        //   ),
-        // ),
+
         SizedBox(
           height: 10,
         ),
@@ -807,16 +765,13 @@ class drawer extends StatelessWidget {
               Navigator.pushNamed(context, '/editLable');
             },
           ),
-//
         new Expanded(
           flex: 1,
           child: ListView.builder(
               physics: ScrollPhysics(),
-              //  physics: NeverScrollableScrollPhysics(),
               shrinkWrap: true,
               itemCount: allLable.length,
               itemBuilder: (BuildContext context, int index) {
-                // var value;
                 return Padding(
                   padding: const EdgeInsets.only(left: 20, bottom: 10),
                   child: Row(
@@ -828,23 +783,6 @@ class drawer extends StatelessWidget {
                         allLable[index]['lable'],
                         style: TextStyle(fontSize: 14),
                       ),
-                      // Expanded(
-                      //   child: Row(
-                      //     mainAxisAlignment: MainAxisAlignment.end,
-                      //     //crossAxisAlignment: CrossAxisAlignment.end,
-                      //     children: [
-                      //       //new Spacer(),
-                      //       Checkbox(
-                      //         value: this.checkboxValue,
-                      //         onChanged: (bool? value) {
-                      //           setState(() {
-                      //             this.checkboxValue = value!;
-                      //           });
-                      //         },
-                      //       ),
-                      //     ],
-                      //   ),
-                      // ),
                     ],
                   ),
                 );

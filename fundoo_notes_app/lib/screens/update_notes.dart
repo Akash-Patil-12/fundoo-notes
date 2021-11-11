@@ -1,11 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-//import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UpdateNotes extends StatefulWidget {
   UpdateNotes({Key? key}) : super(key: key);
-
   @override
   _UpdateNotesState createState() => _UpdateNotesState();
 }
@@ -24,27 +23,14 @@ class _UpdateNotesState extends State<UpdateNotes> {
   ];
   late bool checkPin = false, checkArchived = true, checkFirst = true;
   late Color _color = Colors.white;
-
+  List<String> lables = [];
   Map notesData = {};
   TextEditingController title = new TextEditingController();
   TextEditingController note = new TextEditingController();
-
-  // late String email, firstName;
-  // List<String> menuOption = ['save', 'demo'];
   dynamic currentTime = DateFormat.jm().format(DateTime.now());
-
-  // Future<void> getSharedData() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   email = prefs.getString('email')!;
-  //   firstName = prefs.getString('firstName')!;
-  //   print(email);
-  //   print(firstName);
-  // }
-
   @override
   void initState() {
     super.initState();
-    //  getSharedData();
   }
 
   @override
@@ -54,9 +40,13 @@ class _UpdateNotesState extends State<UpdateNotes> {
     note.text = notesData['note'];
     print('...' + notesData['pin'].toString());
     checkPin = notesData['pin'];
+    if (notesData['lables'] != null) {
+      lables = notesData['lables']!.cast<String>();
+    }
     checkArchived = notesData['archived'];
     if (notesData['color'] != "" && checkFirst == true) {
       print('/////////////');
+      print(lables);
       String valueString =
           notesData['color'].toString().split('(0x')[1].split(')')[0];
       int value = int.parse(valueString, radix: 16);
@@ -67,15 +57,7 @@ class _UpdateNotesState extends State<UpdateNotes> {
       });
       print(_color);
     }
-    // if (notesData['pin'] == true) {
-    //   setState(() {
-    //     checkPin = true;
-    //   });
-    // } else {
-    //   setState(() {
-    //     checkPin = false;
-    //   });
-    // }
+
     print("update.......$notesData");
 
     return Scaffold(
@@ -130,7 +112,6 @@ class _UpdateNotesState extends State<UpdateNotes> {
                                 content: checkArchived
                                     ? Text("Notes Archived")
                                     : Text('Notes Unarchived'),
-                                //backgroundColor: Colors.yellow[700],
                                 duration:
                                     Duration(seconds: 1, milliseconds: 250),
                               );
@@ -167,21 +148,32 @@ class _UpdateNotesState extends State<UpdateNotes> {
                     decoration: InputDecoration.collapsed(hintText: 'Note'),
                     keyboardType: TextInputType.multiline,
                     maxLines: null,
-                    // decoration: InputDecoration(
-                    //     hintText: 'Note',
-                    //     border: InputBorder.none,
-                    //     contentPadding: EdgeInsets.all(0)),
-                  )
+                  ),
+                  ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: lables.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: InkWell(
+                            child: Text(
+                              lables[index],
+                              style: TextStyle(
+                                fontSize: 20,
+                                backgroundColor: Colors.grey,
+                              ),
+                            ),
+                          ),
+                        );
+                      })
                 ],
               )),
         ),
         bottomNavigationBar: BottomAppBar(
-            //shape: CircularNotchedRectangle(),
             elevation: 0,
             color: Colors.white10,
             child: Container(
               margin: EdgeInsets.only(right: 10),
-              // width: 80,
               height: 50,
               child: Row(
                 children: [
@@ -258,8 +250,6 @@ class _UpdateNotesState extends State<UpdateNotes> {
                                                                   color: Colors
                                                                       .black12,
                                                                   width: 2.0)),
-                                                          // child: Center(
-                                                          //     child: Text('Text')),
                                                         ),
                                                       )),
                                             ),
@@ -292,21 +282,12 @@ class _UpdateNotesState extends State<UpdateNotes> {
                                       color: Colors.white,
                                       child: Center(
                                         child: Column(
-                                          //   mainAxisAlignment:
-                                          //       MainAxisAlignment.center,
                                           mainAxisAlignment:
                                               MainAxisAlignment.start,
                                           mainAxisSize: MainAxisSize.min,
                                           children: <Widget>[
                                             InkWell(
                                               child: Container(
-                                                // decoration: new BoxDecoration(
-                                                //   borderRadius:
-                                                //       new BorderRadius.circular(
-                                                //           16.0),
-                                                //   color: Colors.green,
-                                                // ),
-                                                // decoration: Decoration(),
                                                 child: Row(children: [
                                                   IconButton(
                                                       onPressed: () {

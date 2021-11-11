@@ -21,18 +21,20 @@ class _AddNotesState extends State<AddNotes> {
     Colors.purpleAccent,
     Colors.blueGrey,
   ];
-  //var colorSelected = Colors.green;
   late Color _color = Colors.white;
   bool pin = false, archived = false;
   TextEditingController title = new TextEditingController();
   TextEditingController note = new TextEditingController();
   late String email, firstName;
   dynamic currentTime = DateFormat.jm().format(DateTime.now());
-
+  List<String> selectedLables = [];
   Future<void> getSharedData() async {
     final prefs = await SharedPreferences.getInstance();
     email = prefs.getString('email')!;
     firstName = prefs.getString('firstName')!;
+    // prefs.remove('selectedLables');
+    selectedLables = prefs.getStringList('selectedLables')!;
+
     print(email);
     print(firstName);
   }
@@ -45,6 +47,8 @@ class _AddNotesState extends State<AddNotes> {
 
   @override
   Widget build(BuildContext context) {
+    print('/////////////////////////////////////////');
+    print(selectedLables);
     return Scaffold(
         backgroundColor: _color,
         appBar: AppBar(
@@ -120,7 +124,30 @@ class _AddNotesState extends State<AddNotes> {
                     decoration: InputDecoration.collapsed(hintText: 'Note'),
                     keyboardType: TextInputType.multiline,
                     maxLines: null,
-                  )
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: selectedLables.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: InkWell(
+                            child: Text(
+                              selectedLables[index],
+                              style: TextStyle(
+                                fontSize: 20,
+                                backgroundColor: Colors.grey,
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.pushNamed(context, '/createLable');
+                            },
+                          ),
+                        );
+                      })
                 ],
               )),
         ),
@@ -129,7 +156,6 @@ class _AddNotesState extends State<AddNotes> {
             color: Colors.white10,
             child: Container(
               margin: EdgeInsets.only(right: 10),
-              // width: 80,
               height: 50,
               child: Row(
                 children: [
@@ -212,8 +238,6 @@ class _AddNotesState extends State<AddNotes> {
                                                                   color: Colors
                                                                       .black12,
                                                                   width: 2.0)),
-                                                          // child: Center(
-                                                          //     child: Text('Text')),
                                                         ),
                                                       )),
                                             ),
@@ -357,7 +381,9 @@ class _AddNotesState extends State<AddNotes> {
                                               onTap: () {
                                                 print('Lable');
                                                 Navigator.pushNamed(
-                                                    context, '/createLable');
+                                                  context,
+                                                  '/createLable',
+                                                );
                                               },
                                             ),
                                           ],
@@ -375,7 +401,7 @@ class _AddNotesState extends State<AddNotes> {
             )));
   }
 
-  void addNotes([bool trash = false, bool archived = false]) {
+  Future<void> addNotes([bool trash = false, bool archived = false]) async {
     if (title.text != "" && note.text != "") {
       Map<String, dynamic> noteData = {
         "email": email,
@@ -385,9 +411,12 @@ class _AddNotesState extends State<AddNotes> {
         "title": title.text,
         "trash": trash,
         "archived": archived,
-        "pin": pin
+        "pin": pin,
+        "lables": selectedLables
       };
       FirebaseFirestore.instance.collection("notes").add(noteData);
+      final prefs = await SharedPreferences.getInstance();
+      prefs.remove("selectedLables");
     }
     Navigator.pushNamed(context, '/home');
   }

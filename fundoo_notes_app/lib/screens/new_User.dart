@@ -30,6 +30,9 @@ class _New_UserState extends State<New_User> {
     final prefs = await SharedPreferences.getInstance();
     checkEmailPresent = prefs.containsKey('email');
     print('......$checkEmailPresent');
+    if (checkEmailPresent == true) {
+      Navigator.pushNamed(context, '/home');
+    }
     // print(firstName);
   }
 
